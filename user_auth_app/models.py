@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 class UserProfile(models.Model):
+  id = models.BigAutoField(primary_key=True)
   user = models.ForeignKey(User, on_delete=models.CASCADE)
   username = models.CharField(max_length=255, null=True, blank=True)
   first_name = models.CharField(max_length=255, null=True, blank=True)
@@ -12,9 +13,11 @@ class UserProfile(models.Model):
   tel = models.CharField(max_length=20, blank=True)
   description = models.TextField(blank=True)
   working_hours = models.CharField(max_length=255, blank=True)
-  user_type = models.CharField(max_length=20, choices=[('business', 'Business'), ('individual', 'Individual')], default='individual')
+  type = models.CharField(max_length=20, choices=[('business', 'Business'), ('customer', 'Customer')])
   email = email = models.EmailField(null=True, blank=True)
   created_at = models.DateTimeField(default=datetime.datetime.now)
 
-  def __str__(self):
-    return f"{self.username} - {self.email}"
+  def save(self, *args, **kwargs):
+        if not self.id and self.user:
+            self.id = self.user.id
+        super().save(*args, **kwargs)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.db import models
+from coderr_app.models import FileUpload
 from coderr_app.models import Offer, OfferDetail
 from django.contrib.auth.models import User
 
@@ -22,3 +22,7 @@ class OfferSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
         
+class FileUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FileUpload
+        fields = ['file', 'uploaded_at']

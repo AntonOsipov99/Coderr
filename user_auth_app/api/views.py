@@ -37,7 +37,8 @@ class CustomLoginView(ObtainAuthToken):
             data = {
                 'token': token.key,
                 'username': user.username, 
-                'email': user.email 
+                'email': user.email,
+                'user_id': user.id
             }
         
         else:
@@ -55,13 +56,13 @@ class RegistrationView(APIView):
         if serializer.is_valid():
             save_account = serializer.save()
             token, created = Token.objects.get_or_create(user=save_account)
+            profile = UserProfile.objects.get(user=save_account)
             data = {
                 'token': token.key,
-                'username': save_account.username, 
-                'user_id': save_account.id 
+                'username': save_account.username,
+                'email': save_account.email,
+                'user_id': save_account.id,
             }
+            return Response(data)
         
-        else:
-            data = serializer.errors
-            
-        return Response(data)
+        return Response(serializer.errors)

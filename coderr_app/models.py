@@ -39,3 +39,7 @@ class OfferDetail(models.Model):
         ('standard', 'Standard'),
         ('premium', 'Premium')
     ], default='basic')
+    
+class FileUpload(models.Model):
+    file = models.FileField(upload_to='uploads/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
