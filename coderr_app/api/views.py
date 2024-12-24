@@ -1,14 +1,23 @@
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.views import  APIView
-from coderr_app.models import Offer, Review
+from coderr_app.models import Offer, OfferDetail, Review
 from .serializers import OfferSerializer, FileUploadSerializer
 from rest_framework.response import Response
 from rest_framework import status
 
 
-class OfferView(generics.ListCreateAPIView):
-    queryset = Offer.objects.all()
+class OfferViewSet(viewsets.ModelViewSet):
     serializer_class = OfferSerializer
+    # permission_classes = [IsAuthenticated]
+    queryset = Offer.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 class OfferViewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Offer.objects.all()
