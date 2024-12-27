@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     'user_auth_app',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'corsheaders',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -139,5 +141,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
 'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
+
+'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+
+'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'],
 }
