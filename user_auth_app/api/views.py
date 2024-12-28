@@ -1,6 +1,6 @@
 from rest_framework.authtoken.models import Token
 from rest_framework import generics
-from .serializers import  BusinessProfileSerializer, ProfileSerializer, CustomerProfileSerializer, RegistrationSerializer
+from .serializers import ProfileSerializer, CustomerProfileSerializer, RegistrationSerializer
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -73,7 +73,7 @@ class ProfileView(APIView):
     
 class BusinessProfileList(generics.ListAPIView):
     queryset = BusinessPartner.objects.all()
-    serializer_class = BusinessProfileSerializer
+    serializer_class = ProfileSerializer
     
 class CustomerProfileList(generics.ListAPIView):
     queryset = Customer.objects.all()

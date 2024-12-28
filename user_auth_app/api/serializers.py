@@ -12,14 +12,6 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['pk', 'username', 'first_name', 'last_name']
-        
-# class UserSerializer(serializers.ModelSerializer):
-#     pk = serializers.IntegerField(source='id')
-    
-#     class Meta:
-#         model = User
-#         fields = ['pk', 'username', 'first_name', 'last_name']
-#         read_only = ['pk', 'username']
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -37,55 +29,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'file', 
                  'location', 'tel', 'description', 'working_hours', 
                  'type', 'email', 'created_at']
-    # def update(self, instance, validated_data):
-    #     # Update User model fields
-    #     user = instance.user
-    #     if 'first_name' in validated_data:
-    #         user.first_name = validated_data.pop('first_name')
-    #     if 'last_name' in validated_data:
-    #         user.last_name = validated_data.pop('last_name')
-    #     user.save()
-
-    #     # Update profile fields
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-    #     instance.save()
-
-    #     return instance
-
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['first_name'] = instance.user.first_name
-    #     representation['last_name'] = instance.user.last_name
-    #     return representation
-        
-class BusinessProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-    file = serializers.FileField(required=False)
-    location = serializers.CharField(required=False, allow_blank=True)
-    tel = serializers.CharField(required=False, allow_blank=True)
-    description = serializers.CharField(required=False, allow_blank=True)
-    working_hours = serializers.CharField(required=False, allow_blank=True)
-    type = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = BusinessPartner
-        fields = [
-            'user',
-            'file',
-            'location',
-            'tel',
-            'description',
-            'working_hours',
-            'type'
-        ]
-        
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-        
 class CustomerProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     
@@ -97,6 +40,7 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
             'uploaded_at',
             'type'
         ]
+
         
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():

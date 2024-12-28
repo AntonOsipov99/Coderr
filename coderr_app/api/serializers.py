@@ -1,9 +1,11 @@
 from rest_framework import serializers
-from coderr_app.models import Offer, OfferDetail, Order, FileUpload
+from coderr_app.models import Offer, OfferDetail, Order, Review, FileUpload
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from user_auth_app.models import Customer
+from .utils import order_references_and_validate
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -146,17 +148,20 @@ class OrderSerializer(serializers.ModelSerializer):
 class CreateOrderSerializer(serializers.Serializer):
     offer_detail_id = serializers.IntegerField()
 
-    def validate_offer_detail_id(self, value):
-        try:
-            Order.objects.get(id=value)
-            return value
-        except Order.DoesNotExist:
-            raise serializers.ValidationError("Angebot mit dieser ID existiert nicht.")
-
-class OrderSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        authenticated_user = self.context['request'].user
+        offer_detail_id = data.get('offer_detail_id')
+        offer_detail, customer, business = order_references_and_validate(offer_detail_id, authenticated_user)
+        self.offer_detail, self.customer, self.business = offer_detail, customer, business
+        return data
+    
+class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Order
-        fields = '__all__'
+        model = Review
+        fields = ['id', 'business_user', 'reviewer', 'rating', 
+                 'description', 'created_at', 'updated_at']
+        read_only_fields = ['reviewer', 'created_at', 'updated_at']
+
         
 class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:

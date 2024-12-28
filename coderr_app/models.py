@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from user_auth_app.models import Customer, BusinessPartner
 
 class Offer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -35,9 +36,10 @@ class Order(models.Model):
     STATUS_CHOICES = (
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
+        ('cancelled', 'Cancelled')
     )
-    customer_user = models.ForeignKey(User, related_name='customer_orders', on_delete=models.CASCADE, null=True, blank=True)
-    business_user = models.ForeignKey(User, related_name='business_orders', on_delete=models.CASCADE, null=True, blank=True)
+    customer_user = models.ForeignKey(Customer, related_name='customer_orders', on_delete=models.CASCADE, null=True, blank=True)
+    business_user = models.ForeignKey(BusinessPartner, related_name='business_orders', on_delete=models.CASCADE, null=True, blank=True)
     title = models.CharField(max_length=255)
     revisions = models.IntegerField(default=0)
     delivery_time_in_days = models.PositiveIntegerField()
@@ -47,17 +49,20 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
         return f"{self.title} - {self.customer_user}"
 
 class Review(models.Model):
-    business_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_as_business_user')
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_as_reviewer')
+    business_user = models.ForeignKey(BusinessPartner, on_delete=models.CASCADE)
+    reviewer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     description = models.TextField(blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['business_user', 'reviewer']
 
     def __str__(self):
         return f"Review {self.id} for {self.business_user}"

@@ -1,20 +1,18 @@
 from django.urls import include, path
-from .views import OfferViewSet, OfferDetailViewSet, ReviewList, OrdersView, OrderCountView, CompletedOrderCountView, BaseInfoView, FileUploadView 
+from .views import OfferViewSet, OfferDetailViewSet, OrdersViewSet, ReviewViewSet, BaseInfoView, FileUploadView
 from rest_framework.routers import DefaultRouter
+from . import views
 
 router = DefaultRouter()
 router.register(r'offers', OfferViewSet, basename='offers')
 router.register(r'offerdetails', OfferDetailViewSet, basename='offerdetails')
+router.register(r'orders', OrdersViewSet, basename='orders')
+router.register(r'reviews', ReviewViewSet, basename='reviews')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('reviews/', ReviewList.as_view(), name='review-list'),
-    path('orders/', OrdersView.as_view(), name='order-list'),
-    path('order-count/', OrderCountView.as_view(), name='order-count'),
-    path('completed-order-count/', CompletedOrderCountView.as_view(), name='completed-order-count'),
-    # path('offers/', OffersView.as_view(), name='offers'),
-    # path('offers/<int:pk>/', OfferViewDetail.as_view(), name='offer-detail'),
-    # path('offerdetails/<int:pk>/', OffersViewDetail.as_view(), name='offer-detail-list'),
+    path('order-count/<int:business_user_id>/', views.get_order_count),
+    path('completed-order-count/<int:business_user_id>/', views.get_completed_order_count),
     path('base-info/', BaseInfoView.as_view(), name='base-info'),
     path('uploads/', FileUploadView.as_view(), name='file-upload'),
 ]
