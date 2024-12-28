@@ -3,7 +3,7 @@ from rest_framework import generics, viewsets, filters
 from rest_framework.filters import OrderingFilter
 from rest_framework.views import  APIView
 from coderr_app.models import Offer, OfferDetail, Order, Review
-from .serializers import OfferDetailSerializer, OfferDetailViewSerializer, FileUploadSerializer, OfferCreateSerializer, OfferListSerializer, OrderSerializer, CreateOrderSerializer, ReviewSerializer
+from .serializers import OfferDetailSerializer, OfferDetailViewSerializer, OfferCreateSerializer, OfferListSerializer, OrderSerializer, CreateOrderSerializer, ReviewSerializer, BaseInfoSerializer, FileUploadSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,20 +12,20 @@ from .permissions import IsBusinessUser, IsOwnerOrAdmin, IsCustomer, IsCustomerO
 from django.shortcuts import get_object_or_404
 from user_auth_app.models import BusinessPartner, Customer
 from rest_framework.exceptions import MethodNotAllowed
-from .utils import create_order_object
+from .utils import create_order_object, filter_review_query
 from rest_framework.decorators import api_view
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Avg
+from .paginations import LargeResultsSetPagination
 
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['title', 'description']
-    ordering_fields = ['min_price', 'created_at']
-    filterset_fields = {
-        'user': ['exact'],
-        'min_price': ['gte', 'lte'],
-    }
+    ordering_fields = ['min_price', 'updated_at']
+    filterset_fields = ['min_price']
+    pagination_class = LargeResultsSetPagination
     
     def get_permissions(self):
         if self.action == 'create':
@@ -82,7 +82,6 @@ class OrdersViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-
         try:
             business_partner = BusinessPartner.objects.get(user=user)
             return Order.objects.filter(business_user=business_partner)
@@ -164,16 +163,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         try:
             queryset = Review.objects.all()
-            business_user_id = self.request.query_params.get('business_user_id')
-            reviewer_id = self.request.query_params.get('reviewer_id')
-
-            if business_user_id:
-                queryset = queryset.filter(business_user_id=business_user_id)
-            if reviewer_id:
-                queryset = queryset.filter(reviewer_id=reviewer_id)
-
+            queryset = filter_review_query(self, queryset)
             return queryset
-
         except Exception as e:
             raise ValidationError({
                 'error': 'Error fetching reviews',
@@ -193,16 +184,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 business_user=serializer.validated_data['business_user'],
                 reviewer=customer
             ).exists()
-
             if existing_review:
                 raise ValidationError({
                     'error': 'Duplicate review',
                     'detail': 'You have already reviewed this business user'
                 })
-
-            # Save the review with the customer as reviewer
             serializer.save(reviewer=customer)
-
         except ValidationError:
             raise
         except Exception as e:
@@ -211,8 +198,23 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 'detail': str(e)
             })
 
-class BaseInfoView(generics.ListCreateAPIView):
-    pass 
+class BaseInfoView(generics.GenericAPIView):
+    serializer_class = BaseInfoSerializer
+    
+    def get(self, request, format=None):
+        review_count = Review.objects.count()
+        average_rating = Review.objects.aggregate(Avg('rating'))['rating__avg'] or 0
+        business_profile_count = BusinessPartner.objects.count()
+        offer_count = Offer.objects.count()
+        data = {
+            'review_count': review_count,
+            'average_rating': round(average_rating, 1),
+            'business_profile_count': business_profile_count,
+            'offer_count': offer_count,
+        }
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid()        
+        return Response(serializer.data)
 
 class FileUploadView(APIView):
     def post(self, request, format=None):

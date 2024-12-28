@@ -29,3 +29,13 @@ def create_order_object(business, customer, offer_detail):
         offer_type=offer_detail.offer_type,
         status='in_progress'
     )
+    
+def filter_review_query(self, queryset):
+    business_user_id = self.request.query_params.get('business_user_id')
+    reviewer_id = self.request.query_params.get('reviewer_id')
+    if business_user_id:
+        return queryset.filter(business_user_id=business_user_id)
+    if reviewer_id:
+        return queryset.filter(reviewer_id=reviewer_id)
+    else:
+        return queryset

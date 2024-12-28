@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from coderr_app.models import Offer, OfferDetail, Order, Review, FileUpload
+from coderr_app.models import Offer, OfferDetail, Order, Review, FileUpload, BaseInfo
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
@@ -161,6 +161,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'business_user', 'reviewer', 'rating', 
                  'description', 'created_at', 'updated_at']
         read_only_fields = ['reviewer', 'created_at', 'updated_at']
+        
+class BaseInfoSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = BaseInfo
+        fields = '__all__'
 
         
 class FileUploadSerializer(serializers.ModelSerializer):

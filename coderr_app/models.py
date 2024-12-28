@@ -67,6 +67,12 @@ class Review(models.Model):
     def __str__(self):
         return f"Review {self.id} for {self.business_user}"
     
+class BaseInfo(models.Model):
+    review_count = models.IntegerField()
+    average_rating = models.DecimalField(max_digits=10, decimal_places=1)
+    business_profile_count = models.IntegerField()
+    offer_count = models.IntegerField()
+    
 class FileUpload(models.Model):
     file = models.FileField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
