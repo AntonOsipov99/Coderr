@@ -17,14 +17,14 @@ from rest_framework.decorators import api_view
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg
 from .paginations import LargeResultsSetPagination
-
+from .utils import OfferFilter
 
 class OfferViewSet(viewsets.ModelViewSet):
-    queryset = Offer.objects.all()
+    queryset = Offer.objects.all().order_by('id')
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['title', 'description']
     ordering_fields = ['min_price', 'updated_at']
-    filterset_fields = ['min_price']
+    filterset_class = OfferFilter
     pagination_class = LargeResultsSetPagination
     
     def get_permissions(self):
@@ -48,8 +48,12 @@ class OfferViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         creator_id = self.request.query_params.get('creator_id', None)
-        if creator_id is not None:
-            queryset = queryset.filter(user_id=creator_id)
+        if creator_id and creator_id.strip():
+            try:
+                creator_id = int(creator_id)
+                queryset = queryset.filter(user_id=creator_id)
+            except ValueError:
+                pass
         return queryset
 
     def destroy(self, request, *args, **kwargs):
@@ -139,7 +143,7 @@ def get_completed_order_count(request, business_user_id):
             business_user=business_user,
             status='completed'
         ).count()
-        return Response({'order_count': completed_count})
+        return Response({'completed_order_count': completed_count})
     except ObjectDoesNotExist:
         return Response(
             {'error': 'Business user not found.'}, 
@@ -170,33 +174,28 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 'error': 'Error fetching reviews',
                 'detail': str(e)
             })
+            
+    def get_customer_or_raise_error(self):
+        try:
+            return Customer.objects.get(user=self.request.user)
+        except Customer.DoesNotExist:
+            raise ValidationError({
+            'error': 'Customer profile not found',
+            'detail': 'You must have a customer profile to create reviews'
+            })
         
     def perform_create(self, serializer):
-        try:
-            try:
-                customer = Customer.objects.get(user=self.request.user)
-            except Customer.DoesNotExist:
-                raise ValidationError({
-                    'error': 'Customer profile not found',
-                    'detail': 'You must have a customer profile to create reviews'
-                })
-            existing_review = Review.objects.filter(
-                business_user=serializer.validated_data['business_user'],
-                reviewer=customer
-            ).exists()
-            if existing_review:
-                raise ValidationError({
-                    'error': 'Duplicate review',
-                    'detail': 'You have already reviewed this business user'
-                })
-            serializer.save(reviewer=customer)
-        except ValidationError:
-            raise
-        except Exception as e:
+        customer = self.get_customer_or_raise_error()
+        existing_review = Review.objects.filter(
+            business_user=serializer.validated_data['business_user'],
+            reviewer=customer
+        ).exists()
+        if existing_review:
             raise ValidationError({
-                'error': 'Error creating review',
-                'detail': str(e)
+            'error': 'Duplicate review',
+            'detail': 'You have already reviewed this business user'
             })
+        serializer.save(reviewer=customer)
 
 class BaseInfoView(generics.GenericAPIView):
     serializer_class = BaseInfoSerializer

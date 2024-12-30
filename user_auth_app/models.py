@@ -9,8 +9,8 @@ class BusinessPartner(models.Model):
   tel = models.CharField(max_length=20, blank=True)
   description = models.TextField(blank=True)
   working_hours = models.CharField(max_length=255, blank=True)
-  type = models.CharField(default='customer', editable=False, max_length=10)
-  email = email = models.EmailField(null=True, blank=True)
+  type = models.CharField(default='business', editable=False, max_length=10)
+  email = models.EmailField(null=True, blank=True)
   created_at = models.DateTimeField(default=datetime.datetime.now)
 
   def save(self, *args, **kwargs):

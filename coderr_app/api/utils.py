@@ -1,6 +1,25 @@
 from django.forms import ValidationError
 from user_auth_app.models import Customer, BusinessPartner
 from coderr_app.models import OfferDetail, Order
+from django_filters import rest_framework as filters
+from datetime import timedelta
+from coderr_app.models import Offer
+
+class OfferFilter(filters.FilterSet):
+    max_delivery_time = filters.NumberFilter(method='filter_max_delivery_time')
+
+    def filter_max_delivery_time(self, queryset, name, value):
+        try:
+            max_days = int(value)
+            if max_days < 0:
+                return queryset.none()
+            return queryset.filter(min_delivery_time__lte=max_days)
+        except (ValueError, TypeError):
+            return queryset.none()
+
+    class Meta:
+        model = Offer
+        fields = ['min_price', 'max_delivery_time']
 
 
 def order_references_and_validate(offer_detail_id, authenticated_user):
