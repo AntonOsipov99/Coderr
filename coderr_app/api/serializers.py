@@ -61,20 +61,6 @@ class OfferCreateSerializer(serializers.ModelSerializer):
             'details',
             'user_details'
         ]
-
-    def validate_details(self, details):
-        if len(details) != 3:
-            raise ValidationError("Genau drei Angebotsdetails (basic, standard, premium) sind erforderlich.")
-        required_types = {'basic', 'standard', 'premium'}
-        provided_types = {detail['offer_type'] for detail in details}  
-        if provided_types != required_types:
-            raise ValidationError(
-                f"Die Angebotstypen müssen genau basic, standard und premium sein."
-            )
-        prices = {detail['offer_type']: detail['price'] for detail in details}
-        if not (prices['basic'] < prices['standard'] < prices['premium']):
-            raise ValidationError("Die Preise müssen aufsteigend sein: basic < standard < premium")  
-        return details
     
     def create(self, validated_data):
         details_data = validated_data.pop('details')
